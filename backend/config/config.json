@@ -1,0 +1,47 @@
+{
+  "server": {
+    "port": 3001,
+    "corsOrigin": "*"
+  },
+  "lobby": {
+    "gameExpirationSeconds": 180,
+    "minPlayers": 2,
+    "maxPlayers": 8,
+    "startCountdownSeconds": 3,
+    "startKey": "u"
+  },
+  "board": {
+    "cellsPerPlayer": 11
+  },
+  "snake": {
+    "initialLength": 1,
+    "movesPerSecond": 3,
+    "collisionPenalty": 2
+  },
+  "food": {
+    "perPlayer": 1
+  },
+  "poison": {
+    "spawnIntervalSeconds": 5,
+    "relocateIntervalSeconds": 8,
+    "maxOnBoard": 3,
+    "lengthPenalty": 1,
+    "freezeSeconds": 2
+  },
+  "gameModes": {
+    "time": { "defaultMinutes": 2 },
+    "length": { "defaultTarget": 10 }
+  },
+  "themes": ["standard", "fruitMix"],
+  "colorPalette": [
+    "#e53935",
+    "#1e88e5",
+    "#43a047",
+    "#fdd835",
+    "#8e24aa",
+    "#fb8c00",
+    "#00acc1",
+    "#d81b60"
+  ],
+  "fruitColors": ["#e53935", "#fdd835", "#43a047", "#8e24aa", "#fb8c00"]
+}
