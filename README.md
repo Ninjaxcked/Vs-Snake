@@ -47,7 +47,21 @@ Todos los parámetros variables del juego (tiempo de espera de partida, movimien
 penalización por choque, veneno, paleta de colores, etc.) se encuentran en
 `backend/config/config.json`.
 
-## Flujo de ramas
+## Flujo de trabajo (Gitflow)
 
-- `main`: versiones estables / entrega.
-- `dev`: integración del desarrollo.
+- `main`: solo contiene trabajo terminado y probado (entregas). Nunca se hace commit directo en ella.
+- `dev`: rama de integración. Todo el desarrollo parte de aquí.
+- `feature/<nombre>`: una rama por funcionalidad, creada desde `dev` y fusionada de vuelta en `dev`.
+
+Pasos para una funcionalidad:
+
+```bash
+git checkout dev
+git pull
+git checkout -b feature/<nombre>
+# ... commits ...
+git push -u origin feature/<nombre>
+# Pull Request feature/<nombre> -> dev
+```
+
+Cuando `dev` tiene una versión terminada y probada, se fusiona en `main` (Pull Request `dev -> main`).
