@@ -20,7 +20,6 @@ const EVENTS = Object.freeze({
 
   // Juego
   GAME_ENTER: 'game:enter',
-  GAME_LOADED: 'game:loaded',
   GAME_READY: 'game:ready',
   GAME_COUNTDOWN: 'game:countdown',
   GAME_START: 'game:start',

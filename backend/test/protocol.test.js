@@ -36,3 +36,11 @@ test('no hay nombres de evento repetidos', () => {
   const names = Object.values(EVENTS);
   assert.equal(new Set(names).size, names.length);
 });
+
+test('docs/protocolo.md documenta exactamente los eventos definidos', () => {
+  const doc = fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'protocolo.md'), 'utf-8');
+  const documented = new Set(
+    [...doc.matchAll(/^### `((?:auth|lobby|game):[a-z]+)`/gm)].map((match) => match[1])
+  );
+  assert.deepEqual([...documented].sort(), Object.values(EVENTS).sort());
+});
