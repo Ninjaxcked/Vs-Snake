@@ -4,29 +4,22 @@
  */
 const express = require('express');
 const cors = require('cors');
-const config = require('./config');
+const defaultConfig = require('./config');
+const { createApiRouter } = require('./routes/api');
+const { InMemoryGameRepository } = require('./repositories/InMemoryGameRepository');
 
 /**
  * Objetivo: crear la aplicación Express con sus middlewares y rutas.
- * Entradas: ninguna.
+ * Entradas: options.repository (opcional; por defecto un InMemoryGameRepository),
+ *           options.config (opcional; por defecto backend/config/config.json).
  * Salidas: instancia de Express lista para montarse en un servidor HTTP.
  * Restricciones: ninguna.
  */
-function createApp() {
+function createApp({ repository = new InMemoryGameRepository(), config = defaultConfig } = {}) {
   const app = express();
   app.use(cors({ origin: config.server.corsOrigin }));
   app.use(express.json());
-
-  /**
-   * Objetivo: verificar que el servidor está en línea.
-   * Entradas: petición GET /api/health.
-   * Salidas: JSON { status: 'ok' }.
-   * Restricciones: ninguna.
-   */
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok' });
-  });
-
+  app.use('/api', createApiRouter({ repository, config }));
   return app;
 }
 
