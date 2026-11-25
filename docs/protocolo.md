@@ -129,12 +129,14 @@ Solo incluye partidas en estado `waiting` o `full` (las que ya empezaron no apar
 Validaciones:
 
 - `mode.type`: `'time'` o `'length'`.
-- `mode.value`: entero. Con `time` es de 1 a 10 minutos; con `length`, de 5 a 100 segmentos.
+- `mode.value`: entero. Con `time` va de `gameModes.time.minMinutes` a `maxMinutes` (1 a 10 minutos);
+  con `length`, de `gameModes.length.minTarget` a `maxTarget` (5 a 100 segmentos).
 - `theme`: uno de `config.themes`.
 - `maxPlayers`: entero entre `config.lobby.minPlayers` (2) y `config.lobby.maxPlayers`.
 - `color`: uno de `config.colorPalette`. El creador queda unido a la partida con ese color.
 - El servidor genera el código y entra al socket en la room de la partida.
-- Si la partida no se completa en `config.lobby.gameExpirationSeconds`, se cancela (`lobby:cancelled`).
+- Si la partida no arranca en `config.lobby.gameExpirationSeconds`, se cancela (`lobby:cancelled`).
+  El tiempo corre desde que se crea hasta que empieza, aunque ya esté completa.
 
 ### `lobby:join` — cliente → servidor (con respuesta)
 
@@ -148,9 +150,10 @@ El color queda bloqueado para los demás jugadores de esa partida.
 
 | Envía | Respuesta |
 |---|---|
-| `{ code }` | `{ ok: true }` |
+| `{ code }` | `{ ok: true }` o error `GAME_NOT_FOUND` si el jugador no está en esa partida |
 
-Libera el color del jugador. Si la partida queda vacía, se elimina.
+Libera el color del jugador. Si la partida queda vacía, se cancela con motivo `'empty'`.
+Si un jugador se desconecta mientras está en una partida en espera, el servidor hace lo mismo.
 
 ### `lobby:update` — servidor → todos los clientes con login
 
@@ -321,7 +324,10 @@ Contiene los parámetros que el cliente necesita para sus formularios:
   gameExpirationSeconds: 180,
   startKey: 'u',
   startCountdownSeconds: 3,
-  gameModes: { time: { defaultMinutes: 2 }, length: { defaultTarget: 10 } }
+  gameModes: {
+    time:   { defaultMinutes: 2, minMinutes: 1, maxMinutes: 10 },
+    length: { defaultTarget: 10, minTarget: 5, maxTarget: 100 }
+  }
 }
 ```
 

@@ -51,7 +51,10 @@ function startSocketTestServer(options) {
         }),
         close: () => new Promise((done) => {
           clients.forEach((client) => client.close());
-          io.close(() => done());
+          io.close(() => {
+            deps.lobby.dispose();
+            done();
+          });
         })
       });
     });
@@ -83,4 +86,24 @@ async function waitFor(condition, timeoutMs = 2000) {
   throw new Error('La condición no se cumplió a tiempo');
 }
 
-module.exports = { startTestServer, startSocketTestServer, request, waitFor };
+/**
+ * Objetivo: esperar el próximo evento que el servidor envíe a un cliente.
+ * Entradas: client (socket cliente), event (nombre), timeoutMs (máximo de espera).
+ * Salidas: promesa con los datos del evento.
+ * Restricciones: falla si el evento no llega a tiempo.
+ */
+function nextEvent(client, event, timeoutMs = 2000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      client.off(event, onEvent);
+      reject(new Error(`No llegó el evento ${event}`));
+    }, timeoutMs);
+    function onEvent(data) {
+      clearTimeout(timer);
+      resolve(data);
+    }
+    client.once(event, onEvent);
+  });
+}
+
+module.exports = { startTestServer, startSocketTestServer, request, waitFor, nextEvent };

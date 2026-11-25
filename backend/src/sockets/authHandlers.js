@@ -6,11 +6,12 @@ const { safeAck, errorResponse, isPlainObject, INVALID } = require('./respond');
 
 /**
  * Objetivo: registrar los eventos auth:check y auth:login de un socket.
- * Entradas: socket (socket de Socket.IO), registry (PlayerRegistry compartido).
+ * Entradas: socket (socket de Socket.IO), registry (PlayerRegistry compartido),
+ *           options.onLogin (opcional; se llama con el nickname tras un login exitoso).
  * Salidas: ninguna.
  * Restricciones: el nickname se libera en el evento disconnect (ver sockets/index.js).
  */
-function registerAuthHandlers(socket, registry) {
+function registerAuthHandlers(socket, registry, { onLogin = () => {} } = {}) {
   /**
    * Objetivo: decir si un nickname está libre mientras el usuario escribe.
    * Entradas: payload { nickname }, ack.
@@ -35,6 +36,7 @@ function registerAuthHandlers(socket, registry) {
     const result = registry.register(socket.id, payload.nickname);
     if (!result.ok) return reply(errorResponse(result.code, result.message));
     socket.data.nickname = result.nickname;
+    onLogin(result.nickname);
     return reply({ ok: true, nickname: result.nickname });
   });
 }
