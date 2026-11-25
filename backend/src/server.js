@@ -3,25 +3,11 @@
  * Expone la API REST (Express) y el canal de tiempo real (Socket.IO).
  */
 const http = require('http');
-const express = require('express');
-const cors = require('cors');
 const { Server } = require('socket.io');
 const config = require('./config');
+const { createApp } = require('./app');
 
-const app = express();
-app.use(cors({ origin: config.server.corsOrigin }));
-app.use(express.json());
-
-/**
- * Objetivo: verificar que el servidor está en línea.
- * Entradas: petición GET /api/health.
- * Salidas: JSON { status: 'ok' }.
- * Restricciones: ninguna.
- */
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
+const app = createApp();
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: config.server.corsOrigin }
