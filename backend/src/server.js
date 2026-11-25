@@ -6,6 +6,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const config = require('./config');
 const { createApp } = require('./app');
+const { setupSockets } = require('./sockets');
 
 const app = createApp();
 const httpServer = http.createServer(app);
@@ -13,12 +14,7 @@ const io = new Server(httpServer, {
   cors: { origin: config.server.corsOrigin }
 });
 
-io.on('connection', (socket) => {
-  console.log(`Cliente conectado: ${socket.id}`);
-  socket.on('disconnect', () => {
-    console.log(`Cliente desconectado: ${socket.id}`);
-  });
-});
+setupSockets(io);
 
 const PORT = process.env.PORT || config.server.port;
 httpServer.listen(PORT, () => {
