@@ -1,11 +1,21 @@
-const { GameMap } = require('../modules/GameMap');
+const { randomUUID } = require('crypto');
 
+/**
+ * Partida en juego. Por ahora solo guarda sus datos básicos;
+ * el ciclo de movimiento (movesPerSecond) se agrega en el motor del juego.
+ */
 class Game {
 
+    /**
+     * Objetivo: crear una partida.
+     * Entradas: modo ({ type: 'time' | 'length', value }), playersCount (número de jugadores).
+     * Salidas: instancia de Game activa.
+     * Restricciones: ninguna.
+     */
     constructor(modo, playersCount) {
-        this.id = crypto.randomUUID();
+        this.id = randomUUID();
         this.active = true;
-        this.estandar = estandar;
+        this.modo = modo;
         this.playersCount = playersCount;
     }
 
@@ -14,6 +24,8 @@ class Game {
     }
 
     get_active() {
-        return this.active
+        return this.active;
     }
 }
+
+module.exports = { Game };
