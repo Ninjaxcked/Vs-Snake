@@ -321,3 +321,104 @@ button.button-secondary:hover:not(:disabled),
   height: 0.8rem;
   border-radius: 50%;
 }
+
+/* Lista de partidas y sala de espera (pages/JoinGamePage.jsx y pages/WaitingRoomPage.jsx). */
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 45vh;
+  margin: 0 0 1rem;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.game-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  font-weight: 400;
+  text-align: left;
+  color: inherit;
+  background: #16181d;
+  border: 1px solid var(--border);
+}
+
+button.game-item:hover:not(:disabled) {
+  background: #1c1f25;
+  border-color: var(--muted);
+}
+
+.game-item-selected,
+button.game-item-selected:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(67, 160, 71, 0.14);
+}
+
+.game-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.game-item-code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.game-item-detail {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.game-item-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.badge {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.badge-full {
+  color: var(--muted);
+}
+
+.join-form {
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.tag {
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.dot-empty {
+  border: 1px dashed var(--muted);
+}
+
+.menu .hint {
+  text-align: center;
+}

@@ -4,6 +4,8 @@ import MenuLayout from './components/MenuLayout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import MenuPage from './pages/MenuPage.jsx';
 import CreateGamePage from './pages/CreateGamePage.jsx';
+import JoinGamePage from './pages/JoinGamePage.jsx';
+import WaitingRoomPage from './pages/WaitingRoomPage.jsx';
 import PlaceholderPage from './pages/PlaceholderPage.jsx';
 
 /**
@@ -20,7 +22,8 @@ export default function App() {
         <Route element={<RequireSession />}>
           <Route path="/" element={<MenuPage />} />
           <Route path="/crear" element={<CreateGamePage />} />
-          <Route path="/unirse" element={<PlaceholderPage title="Unirse a partida" />} />
+          <Route path="/unirse" element={<JoinGamePage />} />
+          <Route path="/sala/:code" element={<WaitingRoomPage />} />
           <Route path="/ranking" element={<PlaceholderPage title="Ranking" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

@@ -1,109 +1,28 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { request, useSession } from '../session/SessionContext.jsx';
 import { EVENTS } from '../protocol/events.js';
 import useServerConfig from '../hooks/useServerConfig.js';
-import useCountdown, { formatSeconds } from '../hooks/useCountdown.js';
 import ColorPicker from '../components/ColorPicker.jsx';
+import { formatTheme } from '../lobby/format.js';
 import {
-  THEME_LABELS,
   initialForm,
   toCreatePayload,
   validateCreateForm,
   valueRange
 } from '../lobby/createGameForm.js';
 
-/** Mensaje que se muestra según el motivo de lobby:cancelled. */
-const CANCEL_MESSAGES = {
-  expired: 'La partida se canceló porque no se completó a tiempo.',
-  empty: 'La partida se canceló porque quedó vacía.'
-};
-
 /**
  * Objetivo: pantalla de la opción "Crear partida".
  * Entradas: ninguna (usa la sesión y GET /api/config).
- * Salidas: el formulario; al crear, el código de la partida y el tiempo que falta para que expire;
- *          si se cancela, el aviso de cancelación.
- * Restricciones: requiere sesión (ruta protegida). Si el jugador sale de la pantalla
- *                antes de que la partida empiece, sale de la partida (lobby:leave).
+ * Salidas: el formulario; al crear, lleva a la sala de espera (/sala/:code), donde se ve
+ *          el código, el tiempo para que expire y el aviso si se cancela.
+ * Restricciones: requiere sesión (ruta protegida).
  */
 export default function CreateGamePage() {
   const { socket } = useSession();
   const navigate = useNavigate();
   const { config, error, retry } = useServerConfig();
-  const [game, setGame] = useState(null);
-  const [deadline, setDeadline] = useState(null);
-  const [cancelReason, setCancelReason] = useState(null);
-  const gameRef = useRef(null);
-  gameRef.current = game;
-
-  useEffect(() => {
-    if (!socket) return undefined;
-
-    /**
-     * Objetivo: actualizar la partida cuando cambia (jugadores, colores, cupo).
-     * Entradas: { game } (GameSummary).
-     * Salidas: ninguna.
-     * Restricciones: ignora otras partidas.
-     */
-    const handleRoom = ({ game: updated }) => {
-      if (gameRef.current && updated.code === gameRef.current.code) setGame(updated);
-    };
-
-    /**
-     * Objetivo: mostrar el aviso cuando la partida se cancela.
-     * Entradas: { code, reason }.
-     * Salidas: ninguna.
-     * Restricciones: ignora otras partidas.
-     */
-    const handleCancelled = ({ code, reason }) => {
-      if (gameRef.current && code === gameRef.current.code) {
-        setGame(null);
-        setDeadline(null);
-        setCancelReason(reason);
-      }
-    };
-
-    socket.on(EVENTS.LOBBY_ROOM, handleRoom);
-    socket.on(EVENTS.LOBBY_CANCELLED, handleCancelled);
-    return () => {
-      socket.off(EVENTS.LOBBY_ROOM, handleRoom);
-      socket.off(EVENTS.LOBBY_CANCELLED, handleCancelled);
-    };
-  }, [socket]);
-
-  // Al salir de la pantalla con una partida en espera, el jugador sale de ella.
-  useEffect(() => () => {
-    if (socket && gameRef.current) {
-      request(socket, EVENTS.LOBBY_LEAVE, { code: gameRef.current.code });
-    }
-  }, [socket]);
-
-  /**
-   * Objetivo: guardar la partida recién creada y empezar la cuenta de expiración.
-   * Entradas: created (GameSummary de la respuesta de lobby:create).
-   * Salidas: ninguna.
-   * Restricciones: el tiempo se cuenta desde que llega la respuesta, así no depende
-   *                de que el reloj del cliente coincida con el del servidor.
-   */
-  const handleCreated = (created) => {
-    setCancelReason(null);
-    setGame(created);
-    setDeadline(Date.now() + config.gameExpirationSeconds * 1000);
-  };
-
-  /**
-   * Objetivo: salir de la partida en espera y volver al menú.
-   * Entradas: ninguna.
-   * Salidas: promesa que termina al navegar al menú.
-   * Restricciones: el servidor cancela la partida si queda vacía.
-   */
-  const handleLeave = async () => {
-    const current = gameRef.current;
-    gameRef.current = null; // ya salió: al desmontar no se vuelve a enviar lobby:leave
-    if (current) await request(socket, EVENTS.LOBBY_LEAVE, { code: current.code });
-    navigate('/', { replace: true });
-  };
 
   if (error) {
     return (
@@ -118,24 +37,13 @@ export default function CreateGamePage() {
 
   if (!config) return <p className="status">Cargando…</p>;
 
-  if (cancelReason) {
-    return (
-      <main className="card">
-        <h1>Partida cancelada</h1>
-        <p role="alert">{CANCEL_MESSAGES[cancelReason] || 'La partida se canceló.'}</p>
-        <div className="menu">
-          <button type="button" onClick={() => setCancelReason(null)}>Crear otra partida</button>
-          <Link className="button button-secondary" to="/">Volver al menú</Link>
-        </div>
-      </main>
-    );
-  }
-
-  if (game) {
-    return <CreatedGame game={game} deadline={deadline} onLeave={handleLeave} />;
-  }
-
-  return <CreateGameForm config={config} socket={socket} onCreated={handleCreated} />;
+  return (
+    <CreateGameForm
+      config={config}
+      socket={socket}
+      onCreated={(game) => navigate(`/sala/${game.code}`, { replace: true, state: { game } })}
+    />
+  );
 }
 
 /**
@@ -234,7 +142,7 @@ function CreateGameForm({ config, socket, onCreated }) {
         <label htmlFor="theme">Temática</label>
         <select id="theme" value={form.theme} onChange={(e) => update('theme', e.target.value)}>
           {config.themes.map((theme) => (
-            <option key={theme} value={theme}>{THEME_LABELS[theme] || theme}</option>
+            <option key={theme} value={theme}>{formatTheme(theme)}</option>
           ))}
         </select>
 
@@ -266,58 +174,6 @@ function CreateGameForm({ config, socket, onCreated }) {
         {submitError && <p className="hint hint-error" role="alert">{submitError}</p>}
       </form>
       <Link className="back-link" to="/">Volver al menú</Link>
-    </main>
-  );
-}
-
-/**
- * Objetivo: mostrar la partida creada mientras espera jugadores.
- * Entradas: game (GameSummary), deadline (ms de Date.now() en que expira),
- *           onLeave (función para salir de la partida).
- * Salidas: código de la partida, tiempo para que expire, jugadores unidos y botón para salir.
- * Restricciones: la sala de espera completa (botón "Entrar") se hace en A6.
- */
-function CreatedGame({ game, deadline, onLeave }) {
-  const left = useCountdown(deadline);
-  const [leaving, setLeaving] = useState(false);
-
-  const modeText = game.mode.type === 'time'
-    ? `Por tiempo · ${game.mode.value} min`
-    : `Por largo · ${game.mode.value} segmentos`;
-
-  return (
-    <main className="card">
-      <h1>Partida creada</h1>
-      <p className="muted">Comparte este código con los demás jugadores:</p>
-      <p className="game-code" aria-label="Código de la partida">{game.code}</p>
-
-      <p className="expires" role="timer" aria-live="off">
-        {left > 0 ? <>Expira en <strong>{formatSeconds(left)}</strong></> : 'Expirando…'}
-      </p>
-
-      <dl className="game-info">
-        <dt>Tipo</dt><dd>{modeText}</dd>
-        <dt>Temática</dt><dd>{THEME_LABELS[game.theme] || game.theme}</dd>
-        <dt>Jugadores</dt><dd>{game.players.length} / {game.maxPlayers}</dd>
-      </dl>
-
-      <ul className="player-list" aria-label="Jugadores unidos">
-        {game.players.map((player) => (
-          <li key={player.nickname}>
-            <span className="dot" style={{ background: player.color }} aria-hidden="true" />
-            {player.nickname}
-          </li>
-        ))}
-      </ul>
-
-      <button
-        type="button"
-        className="button-secondary"
-        onClick={() => { setLeaving(true); onLeave(); }}
-        disabled={leaving}
-      >
-        Salir de la partida
-      </button>
     </main>
   );
 }
