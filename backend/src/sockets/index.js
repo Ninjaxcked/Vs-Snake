@@ -4,6 +4,7 @@
 const defaultConfig = require('../config');
 const { PlayerRegistry } = require('../players/PlayerRegistry');
 const { Lobby } = require('../lobby/Lobby');
+const { InMemoryGameRepository } = require('../repositories/InMemoryGameRepository');
 const { registerAuthHandlers } = require('./authHandlers');
 const {
   AUTHENTICATED_ROOM,
@@ -17,14 +18,16 @@ const {
  * Entradas: io (servidor de Socket.IO),
  *           options.config (opcional; por defecto config.json),
  *           options.registry (opcional; PlayerRegistry compartido),
- *           options.lobby (opcional; Lobby compartido).
- * Salidas: objeto { registry, lobby } con las dependencias usadas (útil para pruebas).
+ *           options.lobby (opcional; Lobby compartido),
+ *           options.repository (opcional; donde se guardan los resultados al terminar cada partida).
+ * Salidas: objeto { registry, lobby, repository } con las dependencias usadas.
  * Restricciones: llamar una sola vez por servidor.
  */
 function setupSockets(io, {
   config = defaultConfig,
   registry = new PlayerRegistry(),
-  lobby = new Lobby({ config })
+  lobby = new Lobby({ config }),
+  repository = new InMemoryGameRepository()
 } = {}) {
   broadcastLobbyChanges(io, lobby);
 
@@ -40,7 +43,7 @@ function setupSockets(io, {
     });
   });
 
-  return { registry, lobby };
+  return { registry, lobby, repository };
 }
 
 module.exports = { setupSockets };

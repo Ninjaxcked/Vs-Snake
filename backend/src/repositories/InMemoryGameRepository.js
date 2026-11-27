@@ -1,8 +1,8 @@
 /**
  * Repositorio de resultados de partidas guardado en memoria.
- * Define la interfaz que usará GameRepository (SQLite, commit A8):
+ * Tiene los mismos métodos que GameRepository (SQLite):
  *   saveResult(result), getRanking(), getGameStats(code).
- * Los datos se pierden al reiniciar el servidor; solo sirve mientras no exista la base de datos.
+ * Los datos se pierden al reiniciar el servidor; se usa en las pruebas.
  */
 class InMemoryGameRepository {
   /**

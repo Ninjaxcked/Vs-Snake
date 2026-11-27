@@ -12,7 +12,9 @@ build/
 
 # Base de datos local
 *.sqlite
+*.sqlite-*
 *.db
+backend/data/
 
 # Logs
 logs/

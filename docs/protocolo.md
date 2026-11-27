@@ -333,6 +333,13 @@ Contiene los parámetros que el cliente necesita para sus formularios:
 
 ### Almacenamiento
 
-Por ahora los resultados se guardan en `InMemoryGameRepository` y se pierden al reiniciar el servidor.
-En A8 (`feature/persistencia`) se reemplaza por `GameRepository` (SQLite), que tendrá los mismos
-métodos: `saveResult(result)`, `getRanking()` y `getGameStats(code)`.
+Los resultados se guardan en SQLite con la clase `GameRepository` (`better-sqlite3`), así que no se
+pierden al reiniciar el servidor. Tiene tres métodos: `saveResult(result)`, `getRanking()` y
+`getGameStats(code)`.
+
+- El archivo es `backend/data/vs-snake.sqlite` (`config.database.path`); se puede cambiar con la
+  variable de entorno `DB_PATH`. La carpeta se crea sola y no se sube al repositorio.
+- Tablas: `games` (una fila por partida) y `game_players` (una fila por jugador de cada partida, con
+  `position`, `color`, `length`, `food_eaten`, `poison_eaten`, `collisions` e `is_winner`).
+- Guardar una partida es una transacción: se guardan la partida y todos sus jugadores, o nada.
+- `InMemoryGameRepository` tiene los mismos métodos y se usa solo en las pruebas.
