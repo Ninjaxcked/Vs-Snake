@@ -3,8 +3,6 @@
  * (PublicConfig de GET /api/config), así el error aparece antes de enviar.
  */
 
-/** Nombres que se muestran para cada temática de config.themes. */
-export const THEME_LABELS = { standard: 'Estándar', fruitMix: 'Fruit Mix' };
 
 /**
  * Objetivo: convertir el texto de un campo numérico a entero.
