@@ -135,3 +135,189 @@ button:disabled {
 a {
   color: var(--accent);
 }
+
+/* Pantalla "Crear partida" (pages/CreateGamePage.jsx). */
+.card-wide {
+  width: min(92vw, 440px);
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+legend,
+label,
+.field-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+legend {
+  margin-bottom: 0.4rem;
+}
+
+select {
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  color: inherit;
+  background: #16181d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.segmented label {
+  position: relative;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+}
+
+.segmented span {
+  display: block;
+  padding: 0.55rem;
+  text-align: center;
+  color: #e8eaed;
+  background: #16181d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.segmented input:checked + span {
+  border-color: var(--accent);
+  background: rgba(67, 160, 71, 0.18);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.swatch {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  background: var(--swatch);
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.swatch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.swatch-selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--swatch);
+}
+
+.swatch:focus-within {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.swatch-taken {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.swatch-taken::after {
+  content: '';
+  position: absolute;
+  inset: 45% -2px;
+  background: #fff;
+  transform: rotate(-45deg);
+}
+
+.button-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+button.button-secondary:hover:not(:disabled),
+.button.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 1.25rem;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.game-code {
+  margin: 0.25rem 0 0.75rem;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  user-select: all;
+}
+
+.expires {
+  margin: 0 0 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+  text-align: left;
+}
+
+.game-info dt {
+  color: var(--muted);
+}
+
+.game-info dd {
+  margin: 0;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.player-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+}
