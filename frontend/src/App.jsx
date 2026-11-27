@@ -1,13 +1,36 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import RequireSession from './session/RequireSession.jsx';
+import MenuLayout from './components/MenuLayout.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import MenuPage from './pages/MenuPage.jsx';
+import CreateGamePage from './pages/CreateGamePage.jsx';
+import JoinGamePage from './pages/JoinGamePage.jsx';
+import WaitingRoomPage from './pages/WaitingRoomPage.jsx';
+import PlaceholderPage from './pages/PlaceholderPage.jsx';
+
 /**
- * Objetivo: componente raíz del cliente Vs Snake.
+ * Objetivo: definir las rutas del cliente Vs Snake.
  * Entradas: ninguna.
- * Salidas: elemento React con la vista principal.
- * Restricciones: ninguna.
+ * Salidas: árbol de rutas; todas, excepto /login, requieren nickname.
+ * Restricciones: debe renderizarse dentro de un Router y de <SessionProvider>.
  */
 export default function App() {
   return (
-    <main>
-      <h1>Vs Snake</h1>
-    </main>
+    <Routes>
+      <Route element={<MenuLayout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<RequireSession />}>
+          <Route path="/" element={<MenuPage />} />
+          <Route path="/crear" element={<CreateGamePage />} />
+          <Route path="/unirse" element={<JoinGamePage />} />
+          <Route path="/sala/:code" element={<WaitingRoomPage />} />
+          <Route path="/ranking" element={<PlaceholderPage title="Ranking" />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Route>
+    </Routes>
   );
 }
+
+/** Opciones de React Router v7 activadas desde ya (evitan avisos en consola). */
+export const ROUTER_FUTURE = { v7_startTransition: true, v7_relativeSplatPath: true };

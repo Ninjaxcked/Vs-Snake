@@ -11,7 +11,7 @@ backend/   Servidor de juego (Node.js + Express + Socket.IO)
   config/config.json   Parámetros configurables del juego
   src/                 Código fuente del servidor
 frontend/  Cliente web (React + Vite)
-docs/      Documentación del proyecto
+docs/      Documentación del proyecto (protocolo.md: contrato cliente–servidor)
 ```
 
 ## Requisitos

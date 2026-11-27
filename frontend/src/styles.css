@@ -1,0 +1,424 @@
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #e8eaed;
+  background: #16181d;
+  --accent: #43a047;
+  --accent-hover: #388e3c;
+  --danger: #ef5350;
+  --muted: #9aa0a6;
+  --surface: #20232a;
+  --border: #33373f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Fondo de las pantallas de menú (ver components/MenuLayout.jsx). */
+.menu-layout {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    linear-gradient(rgba(10, 12, 16, 0.55), rgba(10, 12, 16, 0.55)),
+    url('./assets/menu-bg.jpg') center / cover no-repeat fixed,
+    #16181d;
+  image-rendering: pixelated;
+}
+
+.card {
+  width: min(92vw, 380px);
+  padding: 2rem;
+  background: rgba(32, 35, 42, 0.82);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  image-rendering: auto;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+input {
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  color: inherit;
+  background: #16181d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+button,
+.button {
+  display: block;
+  padding: 0.65rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled),
+.button:hover {
+  background: var(--accent-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.link-button {
+  margin: 1.25rem auto 0;
+  color: var(--muted);
+  font-weight: 400;
+  background: none;
+}
+
+.link-button:hover:not(:disabled) {
+  color: inherit;
+  background: none;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hint {
+  min-height: 1.25rem;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.hint-available {
+  color: var(--accent);
+}
+
+.hint-taken,
+.hint-invalid,
+.hint-error {
+  color: var(--danger);
+}
+
+.status {
+  color: var(--muted);
+}
+
+a {
+  color: var(--accent);
+}
+
+/* Pantalla "Crear partida" (pages/CreateGamePage.jsx). */
+.card-wide {
+  width: min(92vw, 440px);
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+legend,
+label,
+.field-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+legend {
+  margin-bottom: 0.4rem;
+}
+
+select {
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  color: inherit;
+  background: #16181d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.segmented label {
+  position: relative;
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+}
+
+.segmented span {
+  display: block;
+  padding: 0.55rem;
+  text-align: center;
+  color: #e8eaed;
+  background: #16181d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.segmented input:checked + span {
+  border-color: var(--accent);
+  background: rgba(67, 160, 71, 0.18);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.swatch {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  background: var(--swatch);
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.swatch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.swatch-selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--swatch);
+}
+
+.swatch:focus-within {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.swatch-taken {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.swatch-taken::after {
+  content: '';
+  position: absolute;
+  inset: 45% -2px;
+  background: #fff;
+  transform: rotate(-45deg);
+}
+
+.button-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+button.button-secondary:hover:not(:disabled),
+.button.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 1.25rem;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.game-code {
+  margin: 0.25rem 0 0.75rem;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  user-select: all;
+}
+
+.expires {
+  margin: 0 0 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0 0 1rem;
+  text-align: left;
+}
+
+.game-info dt {
+  color: var(--muted);
+}
+
+.game-info dd {
+  margin: 0;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.player-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+}
+
+/* Lista de partidas y sala de espera (pages/JoinGamePage.jsx y pages/WaitingRoomPage.jsx). */
+.game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 45vh;
+  margin: 0 0 1rem;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.game-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  font-weight: 400;
+  text-align: left;
+  color: inherit;
+  background: #16181d;
+  border: 1px solid var(--border);
+}
+
+button.game-item:hover:not(:disabled) {
+  background: #1c1f25;
+  border-color: var(--muted);
+}
+
+.game-item-selected,
+button.game-item-selected:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(67, 160, 71, 0.14);
+}
+
+.game-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.game-item-code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.game-item-detail {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.game-item-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.badge {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.badge-full {
+  color: var(--muted);
+}
+
+.join-form {
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.tag {
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.dot-empty {
+  border: 1px dashed var(--muted);
+}
+
+.menu .hint {
+  text-align: center;
+}
