@@ -71,7 +71,8 @@ class Snake {
      * Recorta la cola de la serpiente.
      */
     decreaseLength() {
-        this.body.pop();
+        // Siempre queda al menos la cabeza, para que la serpiente siga en el tablero.
+        if (this.body.length > 1) this.body.pop();
     }
 
     /**
@@ -97,7 +98,9 @@ class Snake {
      */
     calculateNextMovement() {
         if (!this.canMove()) { return { ...this.head }; }
-        const position = this.direction || this.nextDirection;
+        // Usa la misma dirección que aplicará move(), para que los choques
+        // se calculen sobre la celda a la que de verdad se va a mover.
+        const position = this.nextDirection;
         return {
             x: this.head.x + position.x,
             y: this.head.y + position.y
@@ -118,7 +121,7 @@ class Snake {
             y: this.head.y + this.direction.y
         });
 
-        increaseLength(newHead);
+        this.increaseLength(newHead);
 
         if (!growTail) {
             this.decreaseLength();
@@ -141,11 +144,35 @@ class Snake {
         return cells.some(cell => cell.x === position.x && cell.y === position.y);
     }
 
+    /**
+     * Quita segmentos de la cola por un choque.
+     * Siempre deja al menos la cabeza.
+     *
+     * @param {number} amount - segmentos a quitar.
+     * @returns {number} segmentos que se quitaron de verdad.
+     */
     applyPenalty(amount) {
         const penalty = Math.max(0, Math.floor(amount));
-        const removed = Math.min(penalty, this.body.length);
-        this.body.splice(-removed, removed);
+        const removed = Math.min(penalty, this.body.length - 1);
+        if (removed > 0) this.body.splice(-removed, removed);
         return removed;
+    }
+
+    /**
+     * Detiene la serpiente después de un choque, hasta que el jugador
+     * elija una dirección nueva con setDirection().
+     */
+    resetMovement() {
+        this.waiting = true;
+    }
+
+    /**
+     * Suma los puntos de una comida.
+     *
+     * @param {number} points - puntos que da la comida.
+     */
+    eatFood(points = 1) {
+        this.score += points;
     }
 
     eatPoison() {

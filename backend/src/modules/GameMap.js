@@ -435,8 +435,11 @@ class GameMap {
 
                 let otherBody;
 
-                if (!otherSnake.active || !otherSnake.canMove()) {
-                    otherBody = otherSnake.body.slice(1);
+                if (!otherSnake.active) {
+                    continue;
+                } else if (!otherSnake.canMove()) {
+                    // Una serpiente detenida ocupa todo su cuerpo, cabeza incluida.
+                    otherBody = otherSnake.body;
                 } else if (growingSnakes.has(otherSnake.id)) {
                     otherBody = otherSnake.body;
                 } else {
