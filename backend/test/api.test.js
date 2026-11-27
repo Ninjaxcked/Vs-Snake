@@ -2,6 +2,7 @@ const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { createApp } = require('../src/app');
 const { InMemoryGameRepository } = require('../src/repositories/InMemoryGameRepository');
+const { GameRepository } = require('../src/repositories/GameRepository');
 const { startTestServer } = require('../test-utils/server');
 
 /**
@@ -27,17 +28,24 @@ function sampleResult(overrides = {}) {
   };
 }
 
-describe('API REST', () => {
+// Las mismas pruebas se corren con los dos repositorios, para asegurar que responden igual.
+const REPOSITORIES = {
+  InMemoryGameRepository: () => new InMemoryGameRepository(),
+  'GameRepository (SQLite)': () => new GameRepository(':memory:')
+};
+
+for (const [name, createRepository] of Object.entries(REPOSITORIES)) describe(`API REST con ${name}`, () => {
   let repository;
   let server;
 
   beforeEach(async () => {
-    repository = new InMemoryGameRepository();
+    repository = createRepository();
     server = await startTestServer(createApp({ repository }));
   });
 
   afterEach(async () => {
     await server.close();
+    if (repository.close) repository.close();
   });
 
   test('GET /api/ranking sin partidas devuelve un arreglo vacío', async () => {
