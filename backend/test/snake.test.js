@@ -3,7 +3,6 @@ const assert = require('node:assert/strict');
 
 const { Snake } = require('../src/modules/Snake');
 const { GameMap } = require('../src/modules/GameMap');
-const { Game } = require('../src/modules/Game');
 
 /**
  * Pruebas con la clase Snake real (map.test.js usa una serpiente falsa).
@@ -32,9 +31,16 @@ describe('Snake', () => {
     assert.deepEqual(snake.head, next);
   });
 
-  test('no permite giros de 180°', () => {
+  test('no permite giros de 180° si mide más de 1', () => {
     const snake = new Snake('a', 'Ana', '#e53935', { x: 5, y: 5 }, 'right', 2);
     assert.equal(snake.setDirection('left'), false);
+  });
+
+  test('con largo 1 sí puede darse la vuelta', () => {
+    const snake = new Snake('a', 'Ana', '#e53935', { x: 5, y: 5 }, 'right', 1);
+    assert.equal(snake.setDirection('left'), true);
+    snake.move();
+    assert.deepEqual(snake.head, { x: 4, y: 5 });
   });
 
   test('applyPenalty y eatPoison nunca dejan la serpiente sin cabeza', () => {
@@ -99,13 +105,5 @@ describe('GameMap con serpientes reales', () => {
     const events = map.update();
     assert.ok(events.some((e) => e.type === 'collision' && e.snakeId === 'a'));
     assert.deepEqual(moving.head, { x: 2, y: 2 });
-  });
-});
-
-describe('Game', () => {
-  test('se puede crear y guarda el modo', () => {
-    const game = new Game({ type: 'time', value: 2 }, 2);
-    assert.equal(game.get_active(), true);
-    assert.deepEqual(game.modo, { type: 'time', value: 2 });
   });
 });

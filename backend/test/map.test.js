@@ -62,8 +62,9 @@ function createSnake(id, body, direction = { x: 1, y: 0 }) {
         },
 
         eatFood() {},
-        eatPoison() {},
-        stun() {}
+        eatPoison() { return 0; },
+        stun() {},
+        recordCollision() {}
     };
 }
 
