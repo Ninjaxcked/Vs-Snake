@@ -1,22 +1,30 @@
 const { Snake, DIRECTIONS } = require('../modules/Snake');
-const RESPAWN_MS = 2000;
-const FOOD_COUNT = 5;
+
+/** Celdas libres que se piden delante de una serpiente nueva, para que no aparezca frente a un obstaculo. */
+const SPAWN_CLEARANCE = 4;
+
+/** Nombre de cada tipo de choque interno con el nombre que usa el protocolo (docs/protocolo.md). */
+const COLLISION_TYPES = {
+    edge: 'wall',
+    self: 'self',
+    body: 'snake',
+    heads: 'headOn'
+};
 
 /**
  * Representa el mapa del juego.
- * Maneja las dimenciones del mapa, las serpientes y sus 
- * puntos de regeneracion y los puntos de generacion de comida.
+ * Maneja las dimenciones del mapa, las serpientes, la comida, el veneno
+ * y los choques de cada movimiento.
  */
 class GameMap {
 
     /**
-     * Crea un mapa para el juego y controla sus celdas.
-     *
-     * @param {number} rows - numero filas.
-     * @param {number} columns - numero columnas.
-     * @param {number} foodScore - Puntos por comida.
-     * @param {Object} options - Configuraciones de juego.
-     */ 
+     * Objetivo: crear un mapa para el juego y controlar sus celdas.
+     * Entradas: rows, columns (tamaño del tablero), foodScore (puntos por comida),
+     *           options { foodPerPlayer, maxPoison, collisionPenalty, poisonPenalty }.
+     * Salidas: instancia de GameMap vacia.
+     * Restricciones: rows y columns deben ser enteros positivos.
+     */
     constructor(rows, columns, foodScore = 1, options = {}) {
         if (!Number.isInteger(rows) || rows <= 0 ||
             !Number.isInteger(columns) || columns <= 0) {
@@ -29,6 +37,7 @@ class GameMap {
         this.foodPerPlayer = options.foodPerPlayer ?? 1;
         this.maxPoison = options.maxPoison ?? 1;
         this.collisionPenalty = options.collisionPenalty ?? 1;
+        this.poisonPenalty = options.poisonPenalty ?? 1;
         this.snakes = new Map();
         this.food = [];
         this.poison = [];
@@ -59,9 +68,9 @@ class GameMap {
     }
 
     /**
-     * 
+     * Revisa si una celda esta dentro del tablero y sin serpientes, comida ni veneno.
      *
-     * @param {{x: number, y: number}} position 
+     * @param {{x: number, y: number}} position
      * @returns {boolean}
      */
     isFree(position) {
@@ -84,9 +93,11 @@ class GameMap {
     }
 
     /**
-     *
-     * @param {number} length 
-     * @returns {{head: Object, direction: string}|null}
+     * Objetivo: buscar un lugar donde aparezca una serpiente nueva.
+     * Entradas: length (largo inicial de la serpiente).
+     * Salidas: { head, direction } o null si no encuentra lugar.
+     * Restricciones: el cuerpo (detras de la cabeza) y SPAWN_CLEARANCE celdas
+     *                delante de la cabeza deben estar libres.
      */
     getSpawnPoint(length = 1) {
         const directions = Object.keys(DIRECTIONS);
@@ -95,8 +106,8 @@ class GameMap {
             const direction = directions[Math.floor(Math.random() * directions.length)];
             const d = DIRECTIONS[direction];
             const cells = [];
-            
-            for (let i = 0; i < length + 4; i++) {
+
+            for (let i = -SPAWN_CLEARANCE; i < length; i++) {
                 cells.push({
                     x: head.x - d.x * i,
                     y: head.y - d.y * i
@@ -112,24 +123,23 @@ class GameMap {
     }
 
     /**
-     *
-     * @param {string|number} id 
-     * @param {string} name 
-     * @param {string} color
-     * @returns {Snake|null} 
+     * Objetivo: agregar la serpiente de un jugador en un lugar libre.
+     * Entradas: id, name (nombre del jugador), color, length (largo inicial).
+     * Salidas: la Snake creada, o null si el id ya existe o no hay lugar.
+     * Restricciones: ninguna.
      */
-    addPlayer(id, name, color) {
+    addPlayer(id, name, color, length = 1) {
         if (this.snakes.has(id)) return null;
-        const spawn = this.getSpawnPoint();
+        const spawn = this.getSpawnPoint(length);
         if (!spawn) return null;
-        const snake = new Snake(id, name, color, spawn.head, spawn.direction);
+        const snake = new Snake(id, name, color, spawn.head, spawn.direction, length);
         this.snakes.set(id, snake);
         return snake;
     }
 
     /**
      *
-     * @param {string|number} id 
+     * @param {string|number} id
      * @returns {boolean}
      */
     removePlayer(id) {
@@ -137,8 +147,7 @@ class GameMap {
     }
 
     /**
-     * Genera comida por serpiente,
-     * according to the configured amount.
+     * Genera comida hasta tener foodPerPlayer por cada serpiente.
      *
      * @returns {number} cantidad de comida añadida.
      */
@@ -181,19 +190,26 @@ class GameMap {
      */
     addPoison() {
         let added = 0;
-        let attempts = 0;
+        while (this.spawnPoison()) added++;
+        return added;
+    }
 
-        while (this.poison.length < this.maxPoison && attempts < 500) {
-            attempts++;
+    /**
+     * Objetivo: hacer aparecer un veneno en una celda libre.
+     * Entradas: ninguna.
+     * Salidas: true si aparecio, false si ya hay maxPoison o no hay celda libre.
+     * Restricciones: nunca deja mas de maxPoison venenos en el tablero.
+     */
+    spawnPoison() {
+        if (this.poison.length >= this.maxPoison) return false;
+        for (let attempt = 0; attempt < 500; attempt++) {
             const position = this.getRandomCell();
-
             if (this.isFree(position)) {
                 this.poison.push(position);
-                added++;
+                return true;
             }
         }
-
-        return added;
+        return false;
     }
 
     /**
@@ -214,24 +230,22 @@ class GameMap {
 
     /**
      * Cambia la posicion de todos los venenos en el mapa.
+     * Si para alguno no hay celda libre, se queda donde estaba.
      */
     movePoison() {
         const previousPoison = [...this.poison];
         this.poison = [];
         for (const previous of previousPoison) {
-            let newPosition = null;
+            let newPosition = previous;
             for (let attempt = 0; attempt < 200; attempt++) {
                 const position = this.getRandomCell();
 
-                if (this.isFree(position)) {
+                if (this.isFree(position) && !this.samePosition(position, previous)) {
                     newPosition = position;
                     break;
                 }
             }
-
-            if (newPosition) {
-                this.poison.push(newPosition);
-            }
+            this.poison.push(newPosition);
         }
     }
 
@@ -291,11 +305,16 @@ class GameMap {
         return moves;
     }
 
-    // Identifica las serpientes que pueden moverse en este turno.
-    getMovingSnakes() {
+    /**
+     * Identifica las serpientes que pueden moverse en este turno.
+     *
+     * @param {Set} blocked - ids de serpientes que ya chocaron en este turno (no se mueven).
+     * @returns {Array<Snake>}
+     */
+    getMovingSnakes(blocked = new Set()) {
         const snakes = [];
         for (const snake of this.snakes.values()) {
-            if (snake.canMove()) { snakes.push(snake); }
+            if (snake.canMove() && !blocked.has(snake.id)) { snakes.push(snake); }
         }
 
         return snakes;
@@ -303,9 +322,9 @@ class GameMap {
 
 
     // Identifica las serpientes que crecen al consumir comida en el siguiente movimiento.
-    getGrowingSnakes(nextPositions) {
+    getGrowingSnakes(nextPositions, blocked = new Set()) {
         const snakes = new Set();
-        for (const snake of this.getMovingSnakes()) {
+        for (const snake of this.getMovingSnakes(blocked)) {
             const nextHead = nextPositions.get(snake.id);
             let willEat = false;
 
@@ -323,23 +342,30 @@ class GameMap {
         return snakes;
     }
 
-    // Retorna información de una colisión.
-    collisionInfo(type, snakes, position) {
+    /**
+     * Objetivo: describir un choque.
+     * Entradas: type ('heads' | 'self' | 'edge' | 'body'), snakes (serpientes penalizadas),
+     *           position (celda del choque), against (serpiente contra la que choco, o null).
+     * Salidas: { type, snakeIds, position, againstId }.
+     * Restricciones: ninguna.
+     */
+    collisionInfo(type, snakes, position, against = null) {
 
         const info = {
             type: type,
             snakeIds: snakes.map (snake =>snake.id),
-            position: { x: position.x, y: position.y }
+            position: { x: position.x, y: position.y },
+            againstId: against ? against.id : null
         };
 
         return info;
     }
 
 
-    // Colisión de cabezas entre serpientes.
-    infoHeadCollisions(nextMovements) {
+    // Colisión de cabezas entre serpientes (las dos se penalizan).
+    infoHeadCollisions(nextMovements, blocked = new Set()) {
         const collisions = [];
-        const snakes = this.getMovingSnakes();
+        const snakes = this.getMovingSnakes(blocked);
 
         for (let i = 0; i < snakes.length; i++) {
             for (let j = i + 1; j < snakes.length; j++) {
@@ -374,9 +400,9 @@ class GameMap {
     }
 
     // Detecta si una serpiente chocará contra su propio cuerpo.
-    infoSelfCollisions(nextMovements, growingSnakes) {
+    infoSelfCollisions(nextMovements, growingSnakes, blocked = new Set()) {
         const collisions = [];
-        const snakes = this.getMovingSnakes();
+        const snakes = this.getMovingSnakes(blocked);
 
         for (const snake of snakes) {
             const snakeHead = nextMovements.get(snake.id);
@@ -404,9 +430,9 @@ class GameMap {
 
 
     // Detecta si una serpiente chocará contra los bordes del tablero.
-    infoEdgeCollisions(nextMovements) {
+    infoEdgeCollisions(nextMovements, blocked = new Set()) {
         const collisions = [];
-        const snakes = this.getMovingSnakes();
+        const snakes = this.getMovingSnakes(blocked);
 
         for (const snake of snakes) {
             const snakeHead = nextMovements.get(snake.id);
@@ -421,10 +447,15 @@ class GameMap {
         return collisions;
     }
 
-    // Detecta si una serpiente chocará contra el cuerpo de otra.
-    infoBodyCollisions(nextMovements, growingSnakes) {
+    /**
+     * Detecta si una serpiente chocará contra el cuerpo de otra.
+     * Solo se penaliza a la que choca; la otra queda registrada en againstId.
+     * Una serpiente que no se mueve en este turno (detenida, congelada o que ya chocó)
+     * ocupa todo su cuerpo, cabeza incluida; una que avanza libera su cola, salvo que crezca.
+     */
+    infoBodyCollisions(nextMovements, growingSnakes, blocked = new Set()) {
         const collisions = [];
-        const movingSnakes = this.getMovingSnakes();
+        const movingSnakes = this.getMovingSnakes(blocked);
         const snakes = [...this.snakes.values()];
 
         for (const snake of movingSnakes) {
@@ -437,8 +468,7 @@ class GameMap {
 
                 if (!otherSnake.active) {
                     continue;
-                } else if (!otherSnake.canMove()) {
-                    // Una serpiente detenida ocupa todo su cuerpo, cabeza incluida.
+                } else if (!otherSnake.canMove() || blocked.has(otherSnake.id)) {
                     otherBody = otherSnake.body;
                 } else if (growingSnakes.has(otherSnake.id)) {
                     otherBody = otherSnake.body;
@@ -451,8 +481,9 @@ class GameMap {
                         collisions.push(
                             this.collisionInfo(
                                 'body',
-                                [snake, otherSnake],
-                                snakeHead
+                                [snake],
+                                snakeHead,
+                                otherSnake
                             )
                         );
                         break;
@@ -464,88 +495,104 @@ class GameMap {
         return collisions;
     }
 
-        /**
-         * Chequeo de coliciones para todas las serpientes en movimiento.
-         * Detecta todas las colisiones del siguiente movimiento.
-         * Detecta:
-         * - Limites del mapa
-         * - autochoque
-         * - choque con otra serpiente
-         * - choque de cabezas.
-         *
-         * Las coliciones se dan antes que las serpientes compartan celda.
-         *
-         * @param {Map<Snake, Object>} nextPositions - calculo de posiciones.
-         * @param {Set<Snake>} growingSnakes - serpientes en crecimiento.
-         * @returns {Map<Snake, string[]>} serpientes que chocaron.
-         */
+    /**
+     * Chequeo de coliciones para todas las serpientes en movimiento.
+     * Detecta todas las colisiones del siguiente movimiento:
+     * - Limites del mapa
+     * - autochoque
+     * - choque con otra serpiente
+     * - choque de cabezas.
+     *
+     * Las coliciones se dan antes que las serpientes compartan celda.
+     *
+     * @param {Map} nextMovements - posicion siguiente de cada serpiente.
+     * @param {Set} growingSnakes - ids de serpientes que crecen.
+     * @param {Set} blocked - ids de serpientes que ya chocaron en este turno.
+     * @returns {{head, self, edge, body, all}} choques por tipo.
+     */
+    infoCollisions(nextMovements, growingSnakes, blocked = new Set()) {
+        const head = this.infoHeadCollisions(nextMovements, blocked);
+        const self = this.infoSelfCollisions(nextMovements, growingSnakes, blocked);
+        const edge = this.infoEdgeCollisions(nextMovements, blocked);
+        const body = this.infoBodyCollisions(nextMovements, growingSnakes, blocked);
 
-        infoCollisions(nextMovements, growingSnakes) {
-            const head = this.infoHeadCollisions(nextMovements);
-            const self = this.infoSelfCollisions(nextMovements, growingSnakes);
-            const edge = this.infoEdgeCollisions(nextMovements);
-            const body = this.infoBodyCollisions(nextMovements, growingSnakes);
-
-            return {head, self, edge, body, all: [...head, ...self, ...edge, ...body]};
-        }
-
+        return {head, self, edge, body, all: [...head, ...self, ...edge, ...body]};
+    }
 
     /**
-     * Hace update al tablero por cada movimiento de las serpientes.
-     *
-     * calcula movimineto, busca por choques,
-     * mueve la serpiente, comidas y venenos.
-     *
-     * @returns {Array<Object>} eventos generados en la actualizacion.
+     * Objetivo: encontrar todas las serpientes que chocan en este turno.
+     * Entradas: nextMovements (posicion siguiente de cada serpiente).
+     * Salidas: Map id -> { type, againstId, position } con el primer choque de cada serpiente.
+     * Restricciones: se repite por rondas, porque una serpiente que choca ya no se mueve
+     *                y su cola deja de liberarse: otra que pensaba entrar ahi tambien choca.
      */
+    resolveCollisions(nextMovements) {
+        const collided = new Map();
+        const blocked = new Set();
 
+        for (let round = 0; round <= this.snakes.size; round++) {
+            const growingSnakes = this.getGrowingSnakes(nextMovements, blocked);
+            const found = this.infoCollisions(nextMovements, growingSnakes, blocked).all;
+            let changed = false;
 
-    update() {
-        const events = [];
-        // Coliciones y calculo de posiciones siguientes.
-        const nextMovements = this.getNextMovements();
-        const growingSnakes = this.getGrowingSnakes(nextMovements);
-        const collisions = this.infoCollisions(nextMovements, growingSnakes);
-        const collidedSnakes = new Map();
-
-        for (const collision of collisions.all) {
-            for (const id of collision.snakeIds) {
-                if (!collidedSnakes.has(id)) {
-                    collidedSnakes.set(id, {
-                        reasons: [],
-                        positions: []
-                    });
+            for (const collision of found) {
+                for (const id of collision.snakeIds) {
+                    if (collided.has(id)) continue;
+                    // En un choque de frente, cada una choca contra la otra.
+                    const againstId = collision.type === 'heads'
+                        ? collision.snakeIds.find(other => other !== id)
+                        : collision.againstId;
+                    collided.set(id, { type: collision.type, againstId, position: collision.position });
+                    blocked.add(id);
+                    changed = true;
                 }
-
-                const info = collidedSnakes.get(id);
-
-                if (!info.reasons.includes(collision.type)) {
-                    info.reasons.push(collision.type);
-                }
-
-                info.positions.push(collision.position);
             }
+
+            if (!changed) break;
         }
 
+        return collided;
+    }
+
+    /**
+     * Objetivo: avanzar un movimiento del juego.
+     * Entradas: ninguna.
+     * Salidas: arreglo de eventos del turno:
+     *   { type: 'collision', snakeId, collisionType, againstId, position, removedSegments }
+     *   { type: 'food', snakeId, position }
+     *   { type: 'poison', snakeId, position, removedSegments }
+     * Restricciones: primero resuelve los choques (las que chocan pierden collisionPenalty
+     *                segmentos y quedan detenidas); despues mueve al resto, que come comida
+     *                (crece 1 hacia adelante) o veneno (pierde poisonPenalty y queda congelada).
+     *                Al final repone la comida.
+     */
+    update() {
+        const events = [];
+        const nextMovements = this.getNextMovements();
+        const collided = this.resolveCollisions(nextMovements);
+
         // Penalizaciones.
-        for (const [id, info] of collidedSnakes) {
+        for (const [id, info] of collided) {
             const snake = this.snakes.get(id);
             if (!snake) continue;
             const removed = snake.applyPenalty(this.collisionPenalty);
             snake.resetMovement();
+            const collisionType = COLLISION_TYPES[info.type];
+            snake.recordCollision({ type: collisionType, with: info.againstId ?? null });
 
             events.push({
                 type: 'collision',
                 snakeId: id,
-                reasons: info.reasons,
-                positions: info.positions,
+                collisionType,
+                againstId: info.againstId ?? null,
+                position: info.position,
                 removedSegments: removed
             });
         }
 
         // Continuar flujo de movimiento.
         for (const snake of this.getMovingSnakes()) {
-            if (collidedSnakes.has(snake.id)) continue;
+            if (collided.has(snake.id)) continue;
             const nextMove = nextMovements.get(snake.id);
             const ateFood = this.checkFoodConsumption(nextMove);
             const atePoison = this.checkPoisonConsumption(nextMove);
@@ -565,13 +612,13 @@ class GameMap {
 
             if (atePoison) {
                 this.removePoison(nextMove);
-                snake.eatPoison();
-                snake.stun();
+                const removed = snake.eatPoison(this.poisonPenalty);
 
                 events.push({
                     type: 'poison',
                     snakeId: snake.id,
-                    position: nextMove
+                    position: nextMove,
+                    removedSegments: removed
                 });
             }
         }
@@ -596,4 +643,4 @@ class GameMap {
     }
 }
 
-module.exports = { GameMap };
+module.exports = { GameMap, COLLISION_TYPES };
